@@ -1,0 +1,58 @@
+{
+  "score": 250,
+  "quiz_solved": [
+    "Java_4. Global Variables",
+    "JavaScript_2. Syntax Rules",
+    "Python_5. Loops",
+    "JavaScript_3. Variables",
+    "Java_2. Syntax Rules",
+    "Java_3. Variables",
+    "Python_2. Syntax Rules",
+    "Python_4. Global Variables",
+    "Java_1. Print Commands",
+    "JavaScript_4. Global Variables",
+    "Java_5. Loops",
+    "Python_1. Print Commands",
+    "JavaScript_5. Loops",
+    "JavaScript_1. Print Commands",
+    "Python_3. Variables"
+  ],
+  "first_try_solved": [
+    "Java_4. Global Variables",
+    "JavaScript_2. Syntax Rules",
+    "Python_5. Loops",
+    "JavaScript_3. Variables",
+    "Java_2. Syntax Rules",
+    "Java_3. Variables",
+    "Python_2. Syntax Rules",
+    "Python_4. Global Variables",
+    "Java_1. Print Commands",
+    "JavaScript_4. Global Variables",
+    "Java_5. Loops",
+    "Python_1. Print Commands",
+    "JavaScript_5. Loops",
+    "JavaScript_1. Print Commands",
+    "Python_3. Variables"
+  ],
+  "completed": [],
+  "bonus_solved": [
+    "Python"
+  ],
+  "quiz_attempts": {
+    "Python_1. Print Commands": 1,
+    "Python_2. Syntax Rules": 1,
+    "Python_3. Variables": 1,
+    "Python_4. Global Variables": 1,
+    "Python_5. Loops": 1,
+    "Java_1. Print Commands": 1,
+    "Java_2. Syntax Rules": 1,
+    "Java_3. Variables": 1,
+    "Java_4. Global Variables": 1,
+    "Java_5. Loops": 1,
+    "JavaScript_1. Print Commands": 1,
+    "JavaScript_2. Syntax Rules": 1,
+    "JavaScript_3. Variables": 1,
+    "JavaScript_4. Global Variables": 1,
+    "JavaScript_5. Loops": 1
+  }
+}

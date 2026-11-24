@@ -176,7 +176,53 @@ if all_quizzes_solved and all_bonuses_solved:
 
 language_history = get_language_history()
 
-if section == "🎖️ Badge Showcase & Selector":
+if section == "📺 Language Introduction":
+    st.markdown("# 📺 Language Introduction Videos")
+    st.markdown("Welcome commanders! Watch your language introduction cartridge below:")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("### 🐍 Python Intro")
+        if os.path.exists("python_intro.mp4"):
+            st.video("python_intro.mp4")
+        else:
+            st.info("🚧 Please place `python_intro.mp4` in your project folder.")
+        
+    with col2:
+        st.markdown("### ☕ Java Intro")
+        if os.path.exists("java_intro.mp4"):
+            st.video("java_intro.mp4")
+        else:
+            st.info("🚧 Please place `java_intro.mp4` in your project folder.")
+        
+    with col3:
+        st.markdown("### 🌐 JavaScript Intro")
+        if os.path.exists("js_intro.mp4"):
+            st.video("js_intro.mp4")
+        else:
+            st.info("🚧 Please place `js_intro.mp4` in your project folder.")
+
+    # 📌 Disclaimer Box (Explicitly stating W3Schools video source, no yellow warning triangle)
+    st.markdown(
+        """
+        <div style="
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid #38bdf8;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 25px;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            text-align: center;
+        ">
+            <b>ℹ️ W3Schools Video Disclaimer:</b> All introductory video walkthroughs featured here are sourced from W3Schools tutorials to help students explore the fundamentals of Python, Java, and JavaScript safely in an arcade learning environment.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+elif section == "🎖️ Badge Showcase & Selector":
     render_badges_page()
 
 elif section == "⭐ Bonus Challenge":
@@ -276,7 +322,7 @@ else:
         briefing_label = get_text("LESSON BRIEFING:")
         challenge_label = get_text("Challenge:")
         summary_html = (
-            f'<div class="arcade-briefing-box">'
+            f'<div class="colorful-history-box">'
             f'<strong>💡 {briefing_label}</strong><br>{summary_text}'
             f'</div>'
         )
@@ -290,7 +336,7 @@ else:
             st.caption(get_text("Lets learn from W3Schools video tutorial"))
         else:
             video_html = (
-                '<div class="arcade-video-box">'
+                '<div class="colorful-history-box">'
                 '<div style="font-size: 1.2rem; font-weight: 700;">🎥 VIDEO TUTORIAL</div>'
                 '<p style="margin: 8px 0 0 0; font-size: 0.95rem;">Coming soon! (<code>{}</code>)</p>'
                 '</div>'

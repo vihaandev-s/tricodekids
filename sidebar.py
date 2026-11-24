@@ -176,6 +176,7 @@ def render_sidebar():
         "Navigate Arcade:",
         [
             "⭐ Lessons & Quizzes",
+            "📺 Language Introduction",
             "🎖️ Badge Showcase & Selector",
             "⭐ Bonus Challenge"
         ],

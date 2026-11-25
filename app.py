@@ -209,6 +209,102 @@ if all_quizzes_solved and all_bonuses_solved:
 
 language_history = get_language_history()
 
+WHEEL_LANGS = ["Python", "Java", "JavaScript"]
+LANG_WHEEL_SLICES = [
+    ("Python", "#38bdf8", "#0f172a"),
+    ("Java", "#f97316", "#0f172a"),
+    ("JavaScript", "#fde047", "#0f172a"),
+]
+
+def build_spin_wheel_html(wheel_prefix, slice_specs, selected_idx, spin_id, animate_now, waiting_text, revealed_text, size=320):
+    """Builds an animated SVG spin-the-wheel HTML snippet that reveals its result only after spinning."""
+    n = len(slice_specs)
+    step = 360 / n
+    center_offset = step / 2
+    target_angle = (360 * (4 + (spin_id % 3))) + (360 - (selected_idx * step + center_offset))
+    start_angle = (target_angle - 1080) if animate_now else (0 if spin_id == 0 else target_angle)
+
+    if spin_id == 0:
+        initial_banner = waiting_text
+    elif animate_now:
+        initial_banner = "🌀 Spinning..."
+    else:
+        initial_banner = revealed_text
+
+    svg_parts = []
+    radius = 112
+    label_radius = 68 if n > 3 else 62
+    for idx, (label, fill_color, txt_color) in enumerate(slice_specs):
+        a0 = math.radians(idx * step - 90)
+        a1 = math.radians((idx + 1) * step - 90)
+        amid = math.radians(idx * step + center_offset - 90)
+        x0, y0 = radius * math.cos(a0), radius * math.sin(a0)
+        x1, y1 = radius * math.cos(a1), radius * math.sin(a1)
+        lx, ly = label_radius * math.cos(amid), label_radius * math.sin(amid)
+        rot_deg = idx * step + center_offset
+        large_arc = 1 if step > 180 else 0
+        svg_parts.append(
+            f'<path d="M 0 0 L {x0:.2f} {y0:.2f} A {radius} {radius} 0 {large_arc} 1 {x1:.2f} {y1:.2f} Z" '
+            f'fill="{fill_color}" stroke="#0f172a" stroke-width="2"/>'
+        )
+        svg_parts.append(
+            f'<text x="{lx:.2f}" y="{ly:.2f}" fill="{txt_color}" font-size="14" font-weight="800" '
+            f'text-anchor="middle" dominant-baseline="middle" '
+            f'transform="rotate({rot_deg} {lx:.2f} {ly:.2f})">{label}</text>'
+        )
+    svg_content = "\n        ".join(svg_parts)
+    elem_id = f"{wheel_prefix}_{spin_id}"
+    banner_id = f"{wheel_prefix}_banner_{spin_id}"
+    reveal_script = ""
+    if animate_now:
+        reveal_script = f"""
+        <script>
+          setTimeout(function() {{
+            var w = document.getElementById("{elem_id}");
+            if (w) {{ w.style.transform = "rotate({target_angle}deg)"; }}
+          }}, 50);
+          setTimeout(function() {{
+            var b = document.getElementById("{banner_id}");
+            if (b) {{ b.textContent = {revealed_text!r}; }}
+          }}, 2250);
+        </script>
+        """
+    return f"""
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; font-family:sans-serif;">
+      <div id="{banner_id}" style="
+        width: 92%;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        border: 2px solid #38bdf8;
+        background: rgba(15, 23, 42, 0.85);
+        color: #fde047;
+        font-size: 18px;
+        font-weight: 800;
+        text-align: center;
+        box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+      ">{initial_banner}</div>
+      <div style="font-size:34px; line-height:1; margin-bottom:-8px; z-index:10; filter:drop-shadow(0 0 6px #fde047);">🔻</div>
+      <div id="{elem_id}" style="
+        width: {size}px;
+        height: {size}px;
+        border-radius: 50%;
+        border: 6px solid #fde047;
+        box-shadow: 0 0 26px rgba(253, 224, 71, 0.8);
+        overflow: hidden;
+        transform: rotate({start_angle}deg);
+        transition: transform 2.2s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+      ">
+        <svg viewBox="-115 -115 230 230" width="{size}" height="{size}" style="display:block;">
+          {svg_content}
+          <circle cx="0" cy="0" r="24" fill="#0f172a" stroke="#fde047" stroke-width="3"/>
+          <text x="0" y="2" font-size="18" text-anchor="middle" dominant-baseline="middle">⭐</text>
+        </svg>
+      </div>
+    </div>
+    {reveal_script}
+    """
+
 if section == "📺 Language Introduction":
     st.markdown("# 📺 Language Introduction Videos")
     st.markdown("Welcome commanders! Watch your language introduction cartridge below:")
@@ -260,96 +356,6 @@ elif section == "⭐ Bonus Challenge":
     st.header("⭐ Elite Bonus Challenges (+25 Points Each!)")
     st.write("Spin the **Language Wheel** and **Topic Wheel** to roll your coding challenge, then write your code to earn your exclusive badge!")
 
-    def build_spin_wheel_html(wheel_prefix, slice_specs, selected_idx, spin_id, animate_now, waiting_text, revealed_text, size=320):
-        """Builds an animated SVG spin-the-wheel HTML snippet that reveals its result only after spinning."""
-        n = len(slice_specs)
-        step = 360 / n
-        center_offset = step / 2
-        target_angle = (360 * (4 + (spin_id % 3))) + (360 - (selected_idx * step + center_offset))
-        start_angle = (target_angle - 1080) if animate_now else (0 if spin_id == 0 else target_angle)
-
-        if spin_id == 0:
-            initial_banner = waiting_text
-        elif animate_now:
-            initial_banner = "🌀 Spinning..."
-        else:
-            initial_banner = revealed_text
-
-        svg_parts = []
-        radius = 112
-        label_radius = 68 if n > 3 else 62
-        for idx, (label, fill_color, txt_color) in enumerate(slice_specs):
-            a0 = math.radians(idx * step - 90)
-            a1 = math.radians((idx + 1) * step - 90)
-            amid = math.radians(idx * step + center_offset - 90)
-            x0, y0 = radius * math.cos(a0), radius * math.sin(a0)
-            x1, y1 = radius * math.cos(a1), radius * math.sin(a1)
-            lx, ly = label_radius * math.cos(amid), label_radius * math.sin(amid)
-            rot_deg = idx * step + center_offset
-            large_arc = 1 if step > 180 else 0
-            svg_parts.append(
-                f'<path d="M 0 0 L {x0:.2f} {y0:.2f} A {radius} {radius} 0 {large_arc} 1 {x1:.2f} {y1:.2f} Z" '
-                f'fill="{fill_color}" stroke="#0f172a" stroke-width="2"/>'
-            )
-            svg_parts.append(
-                f'<text x="{lx:.2f}" y="{ly:.2f}" fill="{txt_color}" font-size="14" font-weight="800" '
-                f'text-anchor="middle" dominant-baseline="middle" '
-                f'transform="rotate({rot_deg} {lx:.2f} {ly:.2f})">{label}</text>'
-            )
-        svg_content = "\n        ".join(svg_parts)
-        elem_id = f"{wheel_prefix}_{spin_id}"
-        banner_id = f"{wheel_prefix}_banner_{spin_id}"
-        reveal_script = ""
-        if animate_now:
-            reveal_script = f"""
-            <script>
-              setTimeout(function() {{
-                var w = document.getElementById("{elem_id}");
-                if (w) {{ w.style.transform = "rotate({target_angle}deg)"; }}
-              }}, 50);
-              setTimeout(function() {{
-                var b = document.getElementById("{banner_id}");
-                if (b) {{ b.textContent = {revealed_text!r}; }}
-              }}, 2250);
-            </script>
-            """
-        return f"""
-        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; font-family:sans-serif;">
-          <div id="{banner_id}" style="
-            width: 92%;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border-radius: 12px;
-            border: 2px solid #38bdf8;
-            background: rgba(15, 23, 42, 0.85);
-            color: #fde047;
-            font-size: 18px;
-            font-weight: 800;
-            text-align: center;
-            box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
-          ">{initial_banner}</div>
-          <div style="font-size:34px; line-height:1; margin-bottom:-8px; z-index:10; filter:drop-shadow(0 0 6px #fde047);">🔻</div>
-          <div id="{elem_id}" style="
-            width: {size}px;
-            height: {size}px;
-            border-radius: 50%;
-            border: 6px solid #fde047;
-            box-shadow: 0 0 26px rgba(253, 224, 71, 0.8);
-            overflow: hidden;
-            transform: rotate({start_angle}deg);
-            transition: transform 2.2s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-          ">
-            <svg viewBox="-115 -115 230 230" width="{size}" height="{size}" style="display:block;">
-              {svg_content}
-              <circle cx="0" cy="0" r="24" fill="#0f172a" stroke="#fde047" stroke-width="3"/>
-              <text x="0" y="2" font-size="18" text-anchor="middle" dominant-baseline="middle">⭐</text>
-            </svg>
-          </div>
-        </div>
-        {reveal_script}
-        """
-
-    WHEEL_LANGS = ["Python", "Java", "JavaScript"]
     WHEEL_TOPICS = [
         "1. Print Commands",
         "2. Syntax & Comments",
@@ -378,14 +384,9 @@ elif section == "⭐ Bonus Challenge":
             st.session_state.last_spun_wheel = "lang"
             st.rerun()
         bonus_lang = st.session_state.bonus_wheel_lang
-        lang_slices = [
-            ("Python", "#38bdf8", "#0f172a"),
-            ("Java", "#f97316", "#0f172a"),
-            ("JavaScript", "#fde047", "#0f172a"),
-        ]
         lang_html = build_spin_wheel_html(
             "lang_wheel",
-            lang_slices,
+            LANG_WHEEL_SLICES,
             WHEEL_LANGS.index(bonus_lang),
             st.session_state.bonus_lang_spin_id,
             animate_now=(st.session_state.last_spun_wheel == "lang" and st.session_state.bonus_lang_spin_id > 0),
@@ -537,6 +538,36 @@ elif section == "⭐ Bonus Challenge":
 
 else:
     render_welcome()
+
+    with st.expander("🎡 Not sure what to learn first? Spin the Language Wheel!", expanded=True):
+        if "home_wheel_lang" not in st.session_state:
+            st.session_state.home_wheel_lang = "Python"
+        if "home_lang_spin_id" not in st.session_state:
+            st.session_state.home_lang_spin_id = 0
+        if "home_wheel_animate" not in st.session_state:
+            st.session_state.home_wheel_animate = False
+
+        if st.button("🎡 Spin to Pick Your First Language!", use_container_width=True):
+            st.session_state.home_wheel_lang = random.choice(WHEEL_LANGS)
+            st.session_state.home_lang_spin_id += 1
+            st.session_state.home_wheel_animate = True
+            st.rerun()
+
+        home_lang = st.session_state.home_wheel_lang
+        animate_home = st.session_state.home_wheel_animate and st.session_state.home_lang_spin_id > 0
+        st.session_state.home_wheel_animate = False
+
+        home_wheel_html = build_spin_wheel_html(
+            "home_lang_wheel",
+            LANG_WHEEL_SLICES,
+            WHEEL_LANGS.index(home_lang),
+            st.session_state.home_lang_spin_id,
+            animate_now=animate_home,
+            waiting_text="❓ Language: Spin to see what to learn first!",
+            revealed_text=f"🚀 Start with: {home_lang}!",
+            size=320,
+        )
+        components.html(home_wheel_html, height=455)
 
     hist = language_history[language]
     history_title = get_text("Fun History of")

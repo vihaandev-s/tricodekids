@@ -315,6 +315,7 @@ if section == "📺 Language Introduction":
         st.markdown("### 🐍 Python Intro")
         if os.path.exists("python_intro.mp4"):
             st.video("python_intro.mp4")
+            st.caption(get_text("Disclaimer: This video tutorial is from W3Schools."))
         else:
             st.info("🚧 Please place `python_intro.mp4` in your project folder.")
         
@@ -322,6 +323,7 @@ if section == "📺 Language Introduction":
         st.markdown("### ☕ Java Intro")
         if os.path.exists("java_intro.mp4"):
             st.video("java_intro.mp4")
+            st.caption(get_text("Disclaimer: This video tutorial is from W3Schools."))
         else:
             st.info("🚧 Please place `java_intro.mp4` in your project folder.")
         
@@ -329,6 +331,7 @@ if section == "📺 Language Introduction":
         st.markdown("### 🌐 JavaScript Intro")
         if os.path.exists("js_intro.mp4"):
             st.video("js_intro.mp4")
+            st.caption(get_text("Disclaimer: This video tutorial is from W3Schools."))
         else:
             st.info("🚧 Please place `js_intro.mp4` in your project folder.")
 
@@ -569,52 +572,61 @@ else:
         )
         components.html(home_wheel_html, height=455)
 
-    hist = language_history[language]
-    history_title = get_text("Fun History of")
-    created_by_str = get_text("Created by")
-    in_str = get_text("in")
-    story_translated = get_text(hist["story"])
-    history_html = (
-        f'<div class="colorful-history-box">'
-        f'<h3 style="color: #fde047; text-shadow: 0 0 12px rgba(253, 224, 71, 0.7); margin-top: 0;">📜 {history_title} {language}</h3>'
-        f'<p style="font-size: 1.05rem; line-height: 1.5; margin-bottom: 0;">'
-        f'{created_by_str} <b>{hist["creator"]}</b> {in_str} <b>{hist["year"]}</b>! {story_translated}'
-        f'</p></div>'
-    )
-    st.markdown(history_html, unsafe_allow_html=True)
-
-    selected_label = get_text("Selected:")
-    st.header(f"{selected_label} {language} - {topic}")
-    current_lesson = lessons[language][topic]
-    summary_text = get_text(current_lesson["summary"])
-    challenge_text = get_text(current_lesson["challenge"])
-    video_filename = current_lesson["video"]
-
-    col_main, col_vid = st.columns([2, 1])
-    with col_main:
-        briefing_label = get_text("LESSON BRIEFING:")
-        challenge_label = get_text("Challenge:")
-        summary_html = (
+    if st.session_state.home_lang_spin_id > 0 and language and topic:
+        hist = language_history[language]
+        history_title = get_text("Fun History of")
+        created_by_str = get_text("Created by")
+        in_str = get_text("in")
+        story_translated = get_text(hist["story"])
+        history_html = (
             f'<div class="colorful-history-box">'
-            f'<strong>💡 {briefing_label}</strong><br>{summary_text}'
-            f'</div>'
+            f'<h3 style="color: #fde047; text-shadow: 0 0 12px rgba(253, 224, 71, 0.7); margin-top: 0;">📜 {history_title} {language}</h3>'
+            f'<p style="font-size: 1.05rem; line-height: 1.5; margin-bottom: 0;">'
+            f'{created_by_str} <b>{hist["creator"]}</b> {in_str} <b>{hist["year"]}</b>! {story_translated}'
+            f'</p></div>'
         )
-        st.markdown(summary_html, unsafe_allow_html=True)
-        st.write(f"### {challenge_label} {challenge_text}")
+        st.markdown(history_html, unsafe_allow_html=True)
 
-    with col_vid:
-        is_web_url = isinstance(video_filename, str) and (video_filename.startswith("http://") or video_filename.startswith("https://"))
-        if is_web_url or os.path.exists(video_filename):
-            st.video(video_filename)
-            st.caption(get_text(""))
-        else:
-            video_html = (
-                '<div class="colorful-history-box">'
-                '<div style="font-size: 1.2rem; font-weight: 700;">🎥 VIDEO TUTORIAL</div>'
-                '<p style="margin: 8px 0 0 0; font-size: 0.95rem;">Coming soon! (<code>{}</code>)</p>'
-                '</div>'
-            ).format(video_filename)
-            st.markdown(video_html, unsafe_allow_html=True)
+        selected_label = get_text("Selected:")
+        st.header(f"{selected_label} {language} - {topic}")
+        current_lesson = lessons[language][topic]
+        summary_text = get_text(current_lesson["summary"])
+        challenge_text = get_text(current_lesson["challenge"])
+        video_filename = current_lesson["video"]
 
-    render_code_runner(language, current_lesson)
-    render_quiz(language, topic, current_lesson)
+        col_main, col_vid = st.columns([2, 1])
+        with col_main:
+            briefing_label = get_text("LESSON BRIEFING:")
+            challenge_label = get_text("Challenge:")
+            summary_html = (
+                f'<div class="colorful-history-box">'
+                f'<strong>💡 {briefing_label}</strong><br>{summary_text}'
+                f'</div>'
+            )
+            st.markdown(summary_html, unsafe_allow_html=True)
+            st.write(f"### {challenge_label} {challenge_text}")
+
+        with col_vid:
+            is_web_url = isinstance(video_filename, str) and (video_filename.startswith("http://") or video_filename.startswith("https://"))
+            if is_web_url or os.path.exists(video_filename):
+                st.video(video_filename)
+                st.caption(get_text("Disclaimer: This video tutorial is from W3Schools."))
+            else:
+                video_html = (
+                    '<div class="colorful-history-box">'
+                    '<div style="font-size: 1.2rem; font-weight: 700;">🎥 VIDEO TUTORIAL</div>'
+                    '<p style="margin: 8px 0 0 0; font-size: 0.95rem;">Coming soon! (<code>{}</code>)</p>'
+                    '</div>'
+                ).format(video_filename)
+                st.markdown(video_html, unsafe_allow_html=True)
+
+        render_code_runner(language, current_lesson)
+        render_quiz(language, topic, current_lesson)
+    else:
+        st.markdown(
+            '<div class="arcade-box" style="margin-top: 12px;">'
+            '<h3>🎡 Spin the Language Wheel Above!</h3>'
+            '<p style="margin: 6px 0 0 0;">Your coding language, topics, history, videos, and quizzes will appear automatically after you spin!</p>'
+            '</div>',
+            unsafe_allow_html=True
+        )

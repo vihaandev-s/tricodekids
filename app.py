@@ -12,6 +12,36 @@ from translation import get_text
 
 st.set_page_config(page_title="TriCodeKids - Pro Edition", page_icon="⭐", layout="wide")
 
+# ✨ Initialize Session State for Dark/Light Mode
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True  # Default to arcade dark mode
+
+# 🕹️ Sidebar Toggle for Light/Dark Mode
+st.sidebar.subheader("🕹️ DISPLAY MODE 🕹️")
+col_mode1, col_mode2 = st.sidebar.columns(2)
+with col_mode1:
+    if st.button("🌙 Dark", use_container_width=True):
+        st.session_state.dark_mode = True
+        st.rerun()
+with col_mode2:
+    if st.button("☀️ Light", use_container_width=True):
+        st.session_state.dark_mode = False
+        st.rerun()
+
+# ✨ Arcade glow animation (colors come dynamically from the selected theme & mode)
+st.markdown("""
+<style>
+.arcade-stats-box, .arcade-briefing-box, .arcade-video-box, .arcade-tip-box, .colorful-history-box {
+    animation: arcade-glow 2s infinite alternate;
+}
+@keyframes arcade-glow {
+    from { box-shadow: 0 0 10px var(--theme-accent-blue); }
+    to { box-shadow: 0 0 22px var(--theme-accent-gold); }
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 init_session_state()
 
 # ⏱️ Native Time-based Pop-up Logic (Shows for 30s every 60s)
@@ -203,7 +233,6 @@ if section == "📺 Language Introduction":
         else:
             st.info("🚧 Please place `js_intro.mp4` in your project folder.")
 
-    # 📌 Disclaimer Box (Explicitly stating W3Schools video source, no yellow warning triangle)
     st.markdown(
         """
         <div style="
@@ -212,7 +241,6 @@ if section == "📺 Language Introduction":
             border-radius: 8px;
             padding: 12px 16px;
             margin-top: 25px;
-            color: #e2e8f0;
             font-size: 0.95rem;
             text-align: center;
         ">
@@ -300,7 +328,7 @@ else:
     history_title = get_text("Fun History of")
     created_by_str = get_text("Created by")
     in_str = get_text("in")
-    story_translated = get_text(hist['story'])
+    story_translated = get_text(hist["story"])
     history_html = (
         f'<div class="colorful-history-box">'
         f'<h3 style="color: #fde047; text-shadow: 0 0 12px rgba(253, 224, 71, 0.7); margin-top: 0;">📜 {history_title} {language}</h3>'
@@ -333,7 +361,7 @@ else:
         is_web_url = isinstance(video_filename, str) and (video_filename.startswith("http://") or video_filename.startswith("https://"))
         if is_web_url or os.path.exists(video_filename):
             st.video(video_filename)
-            st.caption(get_text("Lets learn from W3Schools video tutorial"))
+            st.caption(get_text(""))
         else:
             video_html = (
                 '<div class="colorful-history-box">'

@@ -59,13 +59,81 @@ THEMES = {
     }
 }
 
+LIGHT_THEMES = {
+    "⭐ Cosmic Galaxy": {
+        "bg_primary": "#f0f7ff",
+        "bg_secondary": "#dbeafe",
+        "accent_blue": "#0284c7",
+        "accent_gold": "#b45309",
+        "text_color": "#0f172a"
+    },
+    "🟢 Matrix Hacker": {
+        "bg_primary": "#f0fdf4",
+        "bg_secondary": "#dcfce7",
+        "accent_blue": "#15803d",
+        "accent_gold": "#047857",
+        "text_color": "#052e16"
+    },
+    "🎸 Retro Synthwave": {
+        "bg_primary": "#fdf4ff",
+        "bg_secondary": "#fae8ff",
+        "accent_blue": "#c026d3",
+        "accent_gold": "#9333ea",
+        "text_color": "#3b0764"
+    },
+    "🪵 Retro Amber / Brown": {
+        "bg_primary": "#fffbeb",
+        "bg_secondary": "#fef3c7",
+        "accent_blue": "#d97706",
+        "accent_gold": "#92400e",
+        "text_color": "#451a03"
+    },
+    "🍂 Ginger Gold": {
+        "bg_primary": "#fdf8f0",
+        "bg_secondary": "#faecd8",
+        "accent_blue": "#b45309",
+        "accent_gold": "#9a3412",
+        "text_color": "#431407"
+    },
+    "🔮 Royal Indigo": {
+        "bg_primary": "#f5f3ff",
+        "bg_secondary": "#ede9fe",
+        "accent_blue": "#4f46e5",
+        "accent_gold": "#6d28d9",
+        "text_color": "#1e1b4b"
+    },
+    "🔥 Crimson Arcade": {
+        "bg_primary": "#fef2f2",
+        "bg_secondary": "#fee2e2",
+        "accent_blue": "#dc2626",
+        "accent_gold": "#991b1b",
+        "text_color": "#450a0a"
+    },
+    "⚡ Electric Cobalt": {
+        "bg_primary": "#eff6ff",
+        "bg_secondary": "#dbeafe",
+        "accent_blue": "#2563eb",
+        "accent_gold": "#1d4ed8",
+        "text_color": "#172554"
+    }
+}
+
 def get_current_theme():
     theme_name = st.session_state.get("selected_theme", "⭐ Cosmic Galaxy")
-    return THEMES.get(theme_name, THEMES["⭐ Cosmic Galaxy"])
+    is_dark = st.session_state.get("dark_mode", True)
+    palette = THEMES if is_dark else LIGHT_THEMES
+    return palette.get(theme_name, palette["⭐ Cosmic Galaxy"])
 
 def render_theme_selector():
     """Renders the arcade theme picker in the sidebar and injects the dynamic CSS."""
-    st.sidebar.markdown('<p style="color:#fde047; font-weight:700; font-size:1.05rem;">🎨 ARCADE THEME</p>', unsafe_allow_html=True)
+    is_dark = st.session_state.get("dark_mode", True)
+    palette = THEMES if is_dark else LIGHT_THEMES
+    curr_t = get_current_theme()
+
+    st.sidebar.markdown(
+        f'<p style="color:{curr_t["accent_gold"]}; font-weight:700; font-size:1.05rem;">🎨 ARCADE THEME</p>',
+        unsafe_allow_html=True
+    )
     theme_name = st.sidebar.selectbox(
         "Theme Selector:", 
         list(THEMES.keys()), 
@@ -74,7 +142,7 @@ def render_theme_selector():
         label_visibility="collapsed"
     )
     
-    t = THEMES[theme_name]
+    t = palette[theme_name]
     
     theme_css = f"""
         <style>

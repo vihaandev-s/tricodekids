@@ -4,6 +4,7 @@ import os
 import time
 import random
 import math
+import base64
 from sidebar import render_sidebar
 from points import init_session_state, render_badges_page, save_progress, render_score_box, PROGRESS_FILE
 from code_runner import render_code_runner
@@ -14,6 +15,93 @@ from lessons import lessons
 from translation import get_text
 
 st.set_page_config(page_title="TriCodeKids - Pro Edition", page_icon="⭐", layout="wide")
+
+def run_boot_sequence():
+    """Renders a full-screen CSS-animated arcade boot splash overlay once per session (works on both localhost & Streamlit Cloud)."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_path = os.path.join(base_dir, "logo.png")
+    logo_html = '<div style="font-size: 5rem; text-shadow: 0 0 25px #fde047;">⭐</div>'
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as f:
+            b64_logo = base64.b64encode(f.read()).decode("utf-8")
+        logo_html = (
+            f'<img src="data:image/png;base64,{b64_logo}" '
+            'style="width: 160px; height: auto; border-radius: 22px; '
+            'border: 3px solid #fde047; '
+            'box-shadow: 0 0 32px rgba(56, 189, 248, 0.85), 0 0 55px rgba(253, 224, 71, 0.55); '
+            'animation: boot-pulse 1.1s ease-in-out infinite alternate;" />'
+        )
+
+    st.markdown(
+        f"""
+        <style>
+        @keyframes boot-pulse {{
+            from {{ transform: scale(0.96); filter: drop-shadow(0 0 12px #38bdf8); }}
+            to {{ transform: scale(1.05); filter: drop-shadow(0 0 28px #fde047); }}
+        }}
+        @keyframes boot-bar {{
+            0% {{ width: 0%; }}
+            100% {{ width: 100%; }}
+        }}
+        @keyframes boot-overlay-fade {{
+            0%, 82% {{ opacity: 1; visibility: visible; }}
+            100% {{ opacity: 0; visibility: hidden; pointer-events: none; }}
+        }}
+        .tri-boot-overlay {{
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: radial-gradient(circle at center, #151e34 0%, #0a0f1d 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: sans-serif;
+            animation: boot-overlay-fade 3.0s ease-out forwards;
+        }}
+        </style>
+        <div class="tri-boot-overlay">
+            {logo_html}
+            <h1 style="
+                font-size: 3.1rem;
+                font-weight: 900;
+                margin: 24px 0 8px 0;
+                background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 45%, #fde047 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                letter-spacing: 1.5px;
+            ">TriCodeKids Pro</h1>
+            <p style="color: #38bdf8; font-size: 1.05rem; font-weight: 800; letter-spacing: 2px; margin: 0 0 20px 0;">
+                🕹️ BOOTING ARCADE SYSTEM...
+            </p>
+            <div style="
+                width: 320px;
+                height: 14px;
+                background: #0f172a;
+                border: 2px solid #38bdf8;
+                border-radius: 999px;
+                overflow: hidden;
+                box-shadow: 0 0 16px rgba(56, 189, 248, 0.55);
+            ">
+                <div style="
+                    height: 100%;
+                    background: linear-gradient(90deg, #38bdf8, #fde047);
+                    animation: boot-bar 2.4s ease-out forwards;
+                "></div>
+            </div>
+            <p style="color: #fde047; font-size: 0.9rem; font-weight: 700; margin-top: 14px; letter-spacing: 1.5px;">
+                ● PYTHON • JAVA • JAVASCRIPT ●
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.session_state.boot_done = True
+
+# 🚀 Arcade Boot Logo Splash Screen (shown once per session on startup)
+if not st.session_state.get("boot_done", False):
+    run_boot_sequence()
 
 # ✨ Initialize Session State for Dark/Light Mode
 if "dark_mode" not in st.session_state:

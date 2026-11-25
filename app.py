@@ -1,6 +1,9 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import time
+import random
+import math
 from sidebar import render_sidebar
 from points import init_session_state, render_badges_page, save_progress, render_score_box, PROGRESS_FILE
 from code_runner import render_code_runner
@@ -255,71 +258,282 @@ elif section == "🎖️ Badge Showcase & Selector":
 
 elif section == "⭐ Bonus Challenge":
     st.header("⭐ Elite Bonus Challenges (+25 Points Each!)")
-    st.write("Choose a language and write a custom code snippet using a **Global Variable** to earn your exclusive badge!")
-    
-    bonus_lang = st.selectbox("Select Bonus Challenge Language:", ["Python", "Java", "JavaScript"])
-    
-    bonus_starter = ""
-    if bonus_lang == "Python":
-        st.subheader("🐍 Python Elite Bonus: Global Variable Challenge")
-        bonus_starter = '# TODO: Create a global variable and use it inside your code\n\n'
-    elif bonus_lang == "Java":
-        st.subheader("☕ Java Master Bonus: Global Variable Challenge")
-        bonus_starter = 'public class Main {\n  // TODO: Create a static/global variable here\n  \n  public static void main(String[] args) {\n    // Use your global variable here\n    \n  }\n}'
-    elif bonus_lang == "JavaScript":
-        st.subheader("⚡ JS Ninja Bonus: Global Variable Challenge")
-        bonus_starter = '// TODO: Create a global variable outside any function\n\n'
+    st.write("Spin the **Language Wheel** and **Topic Wheel** to roll your coding challenge, then write your code to earn your exclusive badge!")
 
-    user_bonus_code = st.text_area("Write your Bonus Code:", value=bonus_starter, height=180)
-    
-    if st.button("⭐ Submit " + bonus_lang + " Bonus"):
-        if bonus_lang in st.session_state.bonus_solved:
-            already_msg = (
-                '<div class="arcade-box" style="margin: 15px 0;">'
-                '<h3>⭐ ALREADY CONQUERED! ⭐</h3>'
-                '<p style="font-size: 1.1rem; margin-top: 8px; margin-bottom: 0;">You have already unlocked this Badge!</p>'
-                '</div>'
-            )
-            st.markdown(already_msg, unsafe_allow_html=True)
+    def build_spin_wheel_html(wheel_prefix, slice_specs, selected_idx, spin_id, animate_now, waiting_text, revealed_text, size=320):
+        """Builds an animated SVG spin-the-wheel HTML snippet that reveals its result only after spinning."""
+        n = len(slice_specs)
+        step = 360 / n
+        center_offset = step / 2
+        target_angle = (360 * (4 + (spin_id % 3))) + (360 - (selected_idx * step + center_offset))
+        start_angle = (target_angle - 1080) if animate_now else (0 if spin_id == 0 else target_angle)
+
+        if spin_id == 0:
+            initial_banner = waiting_text
+        elif animate_now:
+            initial_banner = "🌀 Spinning..."
         else:
-            success_condition = False
-            if bonus_lang == "Python":
-                success_condition = ("global " in user_bonus_code or ("=" in user_bonus_code and "def " not in user_bonus_code)) and len(user_bonus_code.strip()) > len(bonus_starter.strip())
-            elif bonus_lang == "Java":
-                success_condition = "static" in user_bonus_code and len(user_bonus_code.strip()) > len(bonus_starter.strip())
-            elif bonus_lang == "JavaScript":
-                success_condition = ("var " in user_bonus_code or "let " in user_bonus_code or "const " in user_bonus_code) and len(user_bonus_code.strip()) > len(bonus_starter.strip())
+            initial_banner = revealed_text
 
-            if success_condition:
-                st.session_state.score += 25
-                st.session_state.bonus_solved.add(bonus_lang)
-                st.session_state.last_awarded = 25
-                save_progress()
-                st.balloons()
-                success_msg = (
-                    '<div style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); '
-                    'border: 2px solid #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.6); '
-                    'padding: 20px; border-radius: 12px; color: #ffffff; text-align: center; margin: 15px 0;">'
-                    '<h3 style="margin: 0; color: #a7f3d0; text-shadow: 0 0 10px #34d399;">🎖️ ELITE BONUS UNLOCKED! 🎖️</h3>'
-                    '<p style="font-size: 1.1rem; margin-top: 8px; margin-bottom: 0;">Amazing work! You earned (+25 Bonus Points)!</p>'
+        svg_parts = []
+        radius = 112
+        label_radius = 68 if n > 3 else 62
+        for idx, (label, fill_color, txt_color) in enumerate(slice_specs):
+            a0 = math.radians(idx * step - 90)
+            a1 = math.radians((idx + 1) * step - 90)
+            amid = math.radians(idx * step + center_offset - 90)
+            x0, y0 = radius * math.cos(a0), radius * math.sin(a0)
+            x1, y1 = radius * math.cos(a1), radius * math.sin(a1)
+            lx, ly = label_radius * math.cos(amid), label_radius * math.sin(amid)
+            rot_deg = idx * step + center_offset
+            large_arc = 1 if step > 180 else 0
+            svg_parts.append(
+                f'<path d="M 0 0 L {x0:.2f} {y0:.2f} A {radius} {radius} 0 {large_arc} 1 {x1:.2f} {y1:.2f} Z" '
+                f'fill="{fill_color}" stroke="#0f172a" stroke-width="2"/>'
+            )
+            svg_parts.append(
+                f'<text x="{lx:.2f}" y="{ly:.2f}" fill="{txt_color}" font-size="14" font-weight="800" '
+                f'text-anchor="middle" dominant-baseline="middle" '
+                f'transform="rotate({rot_deg} {lx:.2f} {ly:.2f})">{label}</text>'
+            )
+        svg_content = "\n        ".join(svg_parts)
+        elem_id = f"{wheel_prefix}_{spin_id}"
+        banner_id = f"{wheel_prefix}_banner_{spin_id}"
+        reveal_script = ""
+        if animate_now:
+            reveal_script = f"""
+            <script>
+              setTimeout(function() {{
+                var w = document.getElementById("{elem_id}");
+                if (w) {{ w.style.transform = "rotate({target_angle}deg)"; }}
+              }}, 50);
+              setTimeout(function() {{
+                var b = document.getElementById("{banner_id}");
+                if (b) {{ b.textContent = {revealed_text!r}; }}
+              }}, 2250);
+            </script>
+            """
+        return f"""
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; font-family:sans-serif;">
+          <div id="{banner_id}" style="
+            width: 92%;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border: 2px solid #38bdf8;
+            background: rgba(15, 23, 42, 0.85);
+            color: #fde047;
+            font-size: 18px;
+            font-weight: 800;
+            text-align: center;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+          ">{initial_banner}</div>
+          <div style="font-size:34px; line-height:1; margin-bottom:-8px; z-index:10; filter:drop-shadow(0 0 6px #fde047);">🔻</div>
+          <div id="{elem_id}" style="
+            width: {size}px;
+            height: {size}px;
+            border-radius: 50%;
+            border: 6px solid #fde047;
+            box-shadow: 0 0 26px rgba(253, 224, 71, 0.8);
+            overflow: hidden;
+            transform: rotate({start_angle}deg);
+            transition: transform 2.2s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+          ">
+            <svg viewBox="-115 -115 230 230" width="{size}" height="{size}" style="display:block;">
+              {svg_content}
+              <circle cx="0" cy="0" r="24" fill="#0f172a" stroke="#fde047" stroke-width="3"/>
+              <text x="0" y="2" font-size="18" text-anchor="middle" dominant-baseline="middle">⭐</text>
+            </svg>
+          </div>
+        </div>
+        {reveal_script}
+        """
+
+    WHEEL_LANGS = ["Python", "Java", "JavaScript"]
+    WHEEL_TOPICS = [
+        "1. Print Commands",
+        "2. Syntax & Comments",
+        "3. Variables",
+        "4. Loops",
+        "5. Global Variables",
+    ]
+
+    if "bonus_wheel_lang" not in st.session_state:
+        st.session_state.bonus_wheel_lang = "Python"
+    if "bonus_lang_spin_id" not in st.session_state:
+        st.session_state.bonus_lang_spin_id = 0
+    if "bonus_wheel_topic" not in st.session_state:
+        st.session_state.bonus_wheel_topic = "5. Global Variables"
+    if "bonus_wheel_spin_id" not in st.session_state:
+        st.session_state.bonus_wheel_spin_id = 0
+    if "last_spun_wheel" not in st.session_state:
+        st.session_state.last_spun_wheel = None
+
+    col_lang_wheel, col_topic_wheel = st.columns(2)
+
+    with col_lang_wheel:
+        if st.button("🎡 Spin Language Wheel!", use_container_width=True):
+            st.session_state.bonus_wheel_lang = random.choice(WHEEL_LANGS)
+            st.session_state.bonus_lang_spin_id += 1
+            st.session_state.last_spun_wheel = "lang"
+            st.rerun()
+        bonus_lang = st.session_state.bonus_wheel_lang
+        lang_slices = [
+            ("Python", "#38bdf8", "#0f172a"),
+            ("Java", "#f97316", "#0f172a"),
+            ("JavaScript", "#fde047", "#0f172a"),
+        ]
+        lang_html = build_spin_wheel_html(
+            "lang_wheel",
+            lang_slices,
+            WHEEL_LANGS.index(bonus_lang),
+            st.session_state.bonus_lang_spin_id,
+            animate_now=(st.session_state.last_spun_wheel == "lang" and st.session_state.bonus_lang_spin_id > 0),
+            waiting_text="❓ Language: Spin to reveal!",
+            revealed_text=f"💾 Language: {bonus_lang}",
+            size=320,
+        )
+        components.html(lang_html, height=455)
+
+    with col_topic_wheel:
+        if st.button("🎡 Spin Topic Wheel!", use_container_width=True):
+            st.session_state.bonus_wheel_topic = random.choice(WHEEL_TOPICS)
+            st.session_state.bonus_wheel_spin_id += 1
+            st.session_state.last_spun_wheel = "topic"
+            st.rerun()
+        selected_topic = st.session_state.bonus_wheel_topic
+        topic_slices = [
+            ("Print", "#38bdf8", "#0f172a"),
+            ("Syntax", "#f7558b", "#ffffff"),
+            ("Variables", "#22c55e", "#0f172a"),
+            ("Loops", "#f97316", "#0f172a"),
+            ("Global", "#ec4899", "#ffffff"),
+        ]
+        topic_html = build_spin_wheel_html(
+            "topic_wheel",
+            topic_slices,
+            WHEEL_TOPICS.index(selected_topic),
+            st.session_state.bonus_wheel_spin_id,
+            animate_now=(st.session_state.last_spun_wheel == "topic" and st.session_state.bonus_wheel_spin_id > 0),
+            waiting_text="❓ Topic: Spin to reveal!",
+            revealed_text=f"🎯 Topic: {selected_topic}",
+            size=320,
+        )
+        components.html(topic_html, height=455)
+
+    BONUS_PROMPTS = {
+        "1. Print Commands": {
+            "Python": ("🖨️ Python Bonus: Print Command Challenge", '# TODO: Use print() to display a cool arcade message!\n\n'),
+            "Java": ("🖨️ Java Bonus: Print Command Challenge", 'public class Main {\n  public static void main(String[] args) {\n    // TODO: Use System.out.println() to print a message\n    \n  }\n}'),
+            "JavaScript": ("🖨️ JS Bonus: Print Command Challenge", '// TODO: Use console.log() to display a cool message!\n\n'),
+        },
+        "2. Syntax & Comments": {
+            "Python": ("💬 Python Bonus: Comments & Syntax Challenge", '# TODO: Add a # comment and write a valid Python line below\n'),
+            "Java": ("💬 Java Bonus: Comments & Syntax Challenge", 'public class Main {\n  public static void main(String[] args) {\n    // TODO: Add a comment and a valid Java statement\n  }\n}'),
+            "JavaScript": ("💬 JS Bonus: Comments & Syntax Challenge", '// TODO: Add a // comment and write a valid JS line below\n'),
+        },
+        "3. Variables": {
+            "Python": ("📦 Python Bonus: Variables Challenge", '# TODO: Create a variable (e.g. score = 100) and print it\n\n'),
+            "Java": ("📦 Java Bonus: Variables Challenge", 'public class Main {\n  public static void main(String[] args) {\n    // TODO: Declare a variable (e.g. int score = 100;)\n    \n  }\n}'),
+            "JavaScript": ("📦 JS Bonus: Variables Challenge", '// TODO: Declare a variable with let or const\n\n'),
+        },
+        "4. Loops": {
+            "Python": ("🔁 Python Bonus: Loops Challenge", '# TODO: Write a for or while loop!\n\n'),
+            "Java": ("🔁 Java Bonus: Loops Challenge", 'public class Main {\n  public static void main(String[] args) {\n    // TODO: Write a for or while loop\n    \n  }\n}'),
+            "JavaScript": ("🔁 JS Bonus: Loops Challenge", '// TODO: Write a for or while loop!\n\n'),
+        },
+        "5. Global Variables": {
+            "Python": ("🐍 Python Elite Bonus: Global Variable Challenge", '# TODO: Create a global variable and use it inside your code\n\n'),
+            "Java": ("☕ Java Master Bonus: Global Variable Challenge", 'public class Main {\n  // TODO: Create a static/global variable here\n  \n  public static void main(String[] args) {\n    // Use your global variable here\n    \n  }\n}'),
+            "JavaScript": ("⚡ JS Ninja Bonus: Global Variable Challenge", '// TODO: Create a global variable outside any function\n\n'),
+        },
+    }
+
+    if st.session_state.bonus_lang_spin_id == 0 or st.session_state.bonus_wheel_spin_id == 0:
+        st.markdown(
+            '<div class="arcade-box" style="margin-top: 10px;">'
+            '<h3>🎡 Spin Both Wheels Above!</h3>'
+            '<p style="margin: 6px 0 0 0;">Spin the <b>Language Wheel</b> and the <b>Topic Wheel</b> to reveal your surprise coding challenge!</p>'
+            '</div>',
+            unsafe_allow_html=True
+        )
+    else:
+        subheader_text, bonus_starter = BONUS_PROMPTS[selected_topic][bonus_lang]
+        st.subheader(subheader_text)
+
+        user_bonus_code = st.text_area("Write your Bonus Code:", value=bonus_starter, height=180, key=f"bonus_code_{bonus_lang}_{selected_topic}")
+        
+        if st.button("⭐ Submit " + bonus_lang + " Bonus"):
+            if bonus_lang in st.session_state.bonus_solved:
+                already_msg = (
+                    '<div class="arcade-box" style="margin: 15px 0;">'
+                    '<h3>⭐ ALREADY CONQUERED! ⭐</h3>'
+                    '<p style="font-size: 1.1rem; margin-top: 8px; margin-bottom: 0;">You have already unlocked this Badge!</p>'
                     '</div>'
                 )
-                st.markdown(success_msg, unsafe_allow_html=True)
-                
-                bonus_audio_file = "bonus_audio.m4a" if os.path.exists("bonus_audio.m4a") else ("bonus_audio.mp3" if os.path.exists("bonus_audio.mp3") else None)
-                if bonus_audio_file:
-                    play_audio(bonus_audio_file)
-                st.rerun()
+                st.markdown(already_msg, unsafe_allow_html=True)
             else:
-                fail_msg = (
-                    '<div style="background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%); '
-                    'border: 2px solid #f87171; box-shadow: 0 0 20px rgba(248, 113, 113, 0.6); '
-                    'padding: 20px; border-radius: 12px; color: #ffffff; text-align: center; margin: 15px 0;">'
-                    '<h3 style="margin: 0; color: #fee2e2; text-shadow: 0 0 10px #f87171;">⚠️ GLITCH IN THE MATRIX! ⚠️</h3>'
-                    '<p style="font-size: 1.1rem; margin-top: 8px; margin-bottom: 0;">Not quite! Make sure your code declares a global variable and prints/logs it properly.</p>'
-                    '</div>'
-                )
-                st.markdown(fail_msg, unsafe_allow_html=True)
+                has_new_code = len(user_bonus_code.strip()) > len(bonus_starter.strip())
+                success_condition = False
+                if selected_topic == "1. Print Commands":
+                    if bonus_lang == "Python":
+                        success_condition = "print(" in user_bonus_code and has_new_code
+                    elif bonus_lang == "Java":
+                        success_condition = "System.out.print" in user_bonus_code and has_new_code
+                    elif bonus_lang == "JavaScript":
+                        success_condition = "console.log(" in user_bonus_code and has_new_code
+                elif selected_topic == "2. Syntax & Comments":
+                    if bonus_lang == "Python":
+                        success_condition = "#" in user_bonus_code and has_new_code
+                    else:
+                        success_condition = ("//" in user_bonus_code or "/*" in user_bonus_code) and has_new_code
+                elif selected_topic == "3. Variables":
+                    if bonus_lang == "Python":
+                        success_condition = "=" in user_bonus_code and has_new_code
+                    elif bonus_lang == "Java":
+                        success_condition = any(t in user_bonus_code for t in ["int ", "String ", "double ", "boolean "]) and "=" in user_bonus_code and has_new_code
+                    elif bonus_lang == "JavaScript":
+                        success_condition = any(k in user_bonus_code for k in ["let ", "const ", "var "]) and "=" in user_bonus_code and has_new_code
+                elif selected_topic == "4. Loops":
+                    success_condition = ("for " in user_bonus_code or "for(" in user_bonus_code or "while " in user_bonus_code or "while(" in user_bonus_code) and has_new_code
+                else:
+                    if bonus_lang == "Python":
+                        success_condition = ("global " in user_bonus_code or ("=" in user_bonus_code and "def " not in user_bonus_code)) and has_new_code
+                    elif bonus_lang == "Java":
+                        success_condition = "static" in user_bonus_code and has_new_code
+                    elif bonus_lang == "JavaScript":
+                        success_condition = ("var " in user_bonus_code or "let " in user_bonus_code or "const " in user_bonus_code) and has_new_code
+
+                if success_condition:
+                    st.session_state.score += 25
+                    st.session_state.bonus_solved.add(bonus_lang)
+                    st.session_state.last_awarded = 25
+                    save_progress()
+                    st.balloons()
+                    success_msg = (
+                        '<div style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); '
+                        'border: 2px solid #34d399; box-shadow: 0 0 20px rgba(52, 211, 153, 0.6); '
+                        'padding: 20px; border-radius: 12px; color: #ffffff; text-align: center; margin: 15px 0;">'
+                        '<h3 style="margin: 0; color: #a7f3d0; text-shadow: 0 0 10px #34d399;">🎖️ ELITE BONUS UNLOCKED! 🎖️</h3>'
+                        '<p style="font-size: 1.1rem; margin-top: 8px; margin-bottom: 0;">Amazing work! You earned (+25 Bonus Points)!</p>'
+                        '</div>'
+                    )
+                    st.markdown(success_msg, unsafe_allow_html=True)
+                    
+                    bonus_audio_file = "bonus_audio.m4a" if os.path.exists("bonus_audio.m4a") else ("bonus_audio.mp3" if os.path.exists("bonus_audio.mp3") else None)
+                    if bonus_audio_file:
+                        play_audio(bonus_audio_file)
+                    st.rerun()
+                else:
+                    fail_msg = (
+                        '<div style="background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%); '
+                        'border: 2px solid #f87171; box-shadow: 0 0 20px rgba(248, 113, 113, 0.6); '
+                        'padding: 20px; border-radius: 12px; color: #ffffff; text-align: center; margin: 15px 0;">'
+                        '<h3 style="margin: 0; color: #fee2e2; text-shadow: 0 0 10px #f87171;">⚠️ GLITCH IN THE MATRIX! ⚠️</h3>'
+                        '<p style="font-size: 1.1rem; margin-top: 8px; margin-bottom: 0;">Not quite! Make sure your code solves the spun challenge properly.</p>'
+                        '</div>'
+                    )
+                    st.markdown(fail_msg, unsafe_allow_html=True)
 
 else:
     render_welcome()

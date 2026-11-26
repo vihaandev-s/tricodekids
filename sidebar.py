@@ -2,6 +2,7 @@ import streamlit as st
 from lessons import lessons
 from themes import render_theme_selector
 from ai_tutor import ask_tribot
+from accounts import logout_user
 
 SITE_LANGUAGES = [
     "English",
@@ -15,7 +16,7 @@ SITE_LANGUAGES = [
 def render_sidebar():
     # 🕹️ Arcade Cabinet Marquee Header
     st.sidebar.markdown(
-        """
+        f"""
         <div style="
             text-align: center;
             padding: 8px 4px 4px 4px;
@@ -38,12 +39,17 @@ def render_sidebar():
                 font-weight: 800;
                 margin-top: 2px;
             ">
-                ● PLAYER 1 ACTIVE ●
+                ● {st.session_state.get("current_display_name", "PLAYER 1").upper()} ACTIVE ●
             </div>
         </div>
         """,
         unsafe_allow_html=True
     )
+
+    if st.session_state.get("current_user"):
+        if st.sidebar.button("🚪 Switch / Log Out", use_container_width=True, key="logout_btn"):
+            logout_user()
+            st.rerun()
 
     # 🎨 Render Arcade Theme Selector at the top of the sidebar
     render_theme_selector()
@@ -211,7 +217,7 @@ def render_sidebar():
 
     # 🪙 Bottom Cabinet Footer
     st.sidebar.markdown(
-        """
+        f"""
         <div style="
             text-align: center;
             padding: 12px 6px 4px 6px;

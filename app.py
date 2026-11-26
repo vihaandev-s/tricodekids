@@ -13,6 +13,7 @@ from welcome import render_welcome, play_audio
 from history import get_language_history
 from lessons import lessons
 from translation import get_text
+from accounts import render_auth_screen
 
 st.set_page_config(page_title="TriCodeKids - Pro Edition", page_icon="⭐", layout="wide")
 
@@ -134,6 +135,12 @@ st.markdown("""
 
 
 init_session_state()
+
+if not st.session_state.get("current_user"):
+    from themes import render_theme_selector
+    render_theme_selector()
+    render_auth_screen()
+    st.stop()
 
 # ⏱️ Native Time-based Pop-up Logic (Shows for 30s every 60s)
 if "last_toggle_time" not in st.session_state:
@@ -278,11 +285,7 @@ if all_quizzes_solved and all_bonuses_solved:
                 if k.startswith("quiz_feedback_") or k.startswith("radio_"):
                     del st.session_state[k]
             
-            if os.path.exists(PROGRESS_FILE):
-                try:
-                    os.remove(PROGRESS_FILE)
-                except Exception:
-                    pass
+            save_progress()
             
             st.success("Progress reset successfully! Restarting app...")
             st.rerun()

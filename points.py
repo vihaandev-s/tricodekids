@@ -1,28 +1,16 @@
 import streamlit as st
 import json
 import os
+from accounts import load_user_progress, save_user_progress
 
 PROGRESS_FILE = "tricodekids_progress.json"
 
 def load_progress():
-    if os.path.exists(PROGRESS_FILE):
-        try:
-            with open(PROGRESS_FILE, "r") as f:
-                data = json.load(f)
-                return {
-                    "score": data.get("score", 0),
-                    "quiz_solved": set(data.get("quiz_solved", [])),
-                    "first_try_solved": set(data.get("first_try_solved", [])),
-                    "completed": set(data.get("completed", [])),
-                    "bonus_solved": set(data.get("bonus_solved", [])),
-                    "quiz_attempts": data.get("quiz_attempts", {})
-                }
-        except Exception:
-            pass
-    return None
+    current_user = st.session_state.get("current_user")
+    return load_user_progress(current_user)
 
 def save_progress(quiz_id=None, points_earned=None):
-    """Saves quiz completion and session state to JSON file."""
+    """Saves quiz completion and session state to the logged-in user's account."""
     if quiz_id:
         if "completed_quizzes" not in st.session_state:
             st.session_state.completed_quizzes = set()
@@ -41,11 +29,8 @@ def save_progress(quiz_id=None, points_earned=None):
         "bonus_solved": list(st.session_state.get("bonus_solved", set())),
         "quiz_attempts": st.session_state.get("quiz_attempts", {})
     }
-    try:
-        with open(PROGRESS_FILE, "w") as f:
-            json.dump(data, f, indent=2)
-    except Exception:
-        pass
+    current_user = st.session_state.get("current_user")
+    save_user_progress(current_user, data)
 
 def init_session_state():
     """Initializes session state variables and loads saved progress."""

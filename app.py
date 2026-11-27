@@ -4,6 +4,7 @@ import os
 import time
 import random
 import math
+import base64
 from sidebar import render_sidebar
 from points import init_session_state, render_badges_page, save_progress, render_score_box
 from code_runner import render_code_runner
@@ -17,33 +18,46 @@ from accounts import render_auth_screen
 st.set_page_config(page_title="TriCodeKids - Pro Edition", page_icon="⭐", layout="wide")
 
 def run_boot_sequence():
-    """Renders a sleek Hyundai-infotainment-style boot splash overlay with a custom SVG emblem once per session."""
+    """Renders a sleek Hyundai-infotainment-style boot splash overlay with the project logo once per session."""
+    # Load logo.png as base64 data URI
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logo.png")
+    try:
+        with open(logo_path, "rb") as f:
+            logo_b64 = base64.b64encode(f.read()).decode()
+        logo_src = f"data:image/png;base64,{logo_b64}"
+    except FileNotFoundError:
+        logo_src = ""
+
     st.markdown(
-        """
+        f"""
         <style>
-        @keyframes hyundai-emblem-in {
-            0% { opacity: 0; transform: scale(0.88); filter: drop-shadow(0 0 0px #38bdf8); }
-            45% { opacity: 1; transform: scale(1.0); filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.75)); }
-            100% { opacity: 1; transform: scale(1.02); filter: drop-shadow(0 0 30px rgba(125, 211, 252, 0.9)); }
-        }
-        @keyframes hyundai-sweep {
-            0% { transform: translateX(-120%); opacity: 0; }
-            30% { opacity: 1; }
-            100% { transform: translateX(120%); opacity: 0; }
-        }
-        @keyframes hyundai-text-in {
-            0%, 20% { opacity: 0; letter-spacing: 14px; }
-            65%, 100% { opacity: 1; letter-spacing: 8px; }
-        }
-        @keyframes hyundai-line {
-            0% { width: 0%; opacity: 0.4; }
-            100% { width: 100%; opacity: 1; }
-        }
-        @keyframes boot-overlay-fade {
-            0%, 82% { opacity: 1; visibility: visible; }
-            100% { opacity: 0; visibility: hidden; pointer-events: none; }
-        }
-        .tri-boot-overlay {
+        @keyframes hyundai-emblem-in {{
+            0% {{ opacity: 0; transform: scale(0.88); filter: drop-shadow(0 0 0px #38bdf8); }}
+            45% {{ opacity: 1; transform: scale(1.0); filter: drop-shadow(0 0 22px rgba(56, 189, 248, 0.75)); }}
+            100% {{ opacity: 1; transform: scale(1.02); filter: drop-shadow(0 0 30px rgba(125, 211, 252, 0.9)); }}
+        }}
+        @keyframes hyundai-sweep {{
+            0% {{ transform: translateX(-120%); opacity: 0; }}
+            30% {{ opacity: 1; }}
+            100% {{ transform: translateX(120%); opacity: 0; }}
+        }}
+        @keyframes hyundai-text-in {{
+            0%, 20% {{ opacity: 0; letter-spacing: 14px; }}
+            65%, 100% {{ opacity: 1; letter-spacing: 8px; }}
+        }}
+        @keyframes hyundai-line {{
+            0% {{ width: 0%; opacity: 0.4; }}
+            100% {{ width: 100%; opacity: 1; }}
+        }}
+        @keyframes boot-overlay-fade {{
+            0%, 82% {{ opacity: 1; visibility: visible; }}
+            100% {{ opacity: 0; visibility: hidden; pointer-events: none; }}
+        }}
+        @keyframes boot-logo-pulse {{
+            0%, 100% {{ filter: drop-shadow(0 0 18px rgba(56, 189, 248, 0.6)); }}
+            50% {{ filter: drop-shadow(0 0 36px rgba(125, 211, 252, 0.95)); }}
+        }}
+        .tri-boot-overlay {{
             position: fixed;
             inset: 0;
             z-index: 999999;
@@ -56,23 +70,23 @@ def run_boot_sequence():
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow: hidden;
             animation: boot-overlay-fade 3.4s ease-in-out forwards;
-        }
-        .hyundai-horizon {
+        }}
+        .hyundai-horizon {{
             position: relative;
-            width: 340px;
-            height: 2px;
+            width: 420px;
+            height: 3px;
             background: rgba(56, 189, 248, 0.18);
-            margin-top: 26px;
+            margin-top: 28px;
             overflow: hidden;
             border-radius: 999px;
-        }
-        .hyundai-horizon-fill {
+        }}
+        .hyundai-horizon-fill {{
             height: 100%;
             background: linear-gradient(90deg, transparent, #38bdf8, #e0f2fe, #38bdf8, transparent);
             box-shadow: 0 0 14px #38bdf8;
             animation: hyundai-line 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-        }
-        .hyundai-beam {
+        }}
+        .hyundai-beam {{
             position: absolute;
             top: 50%;
             left: 0;
@@ -81,38 +95,23 @@ def run_boot_sequence():
             background: linear-gradient(90deg, transparent, rgba(125, 211, 252, 0.65), transparent);
             animation: hyundai-sweep 2.2s ease-in-out forwards;
             pointer-events: none;
-        }
+        }}
+        .boot-logo-img {{
+            width: 260px;
+            max-width: 70vw;
+            animation: boot-logo-pulse 2s ease-in-out infinite;
+            border-radius: 16px;
+        }}
         </style>
         <div class="tri-boot-overlay">
             <div class="hyundai-beam"></div>
             <div style="animation: hyundai-emblem-in 2.2s ease-out forwards;">
-                <svg width="190" height="108" viewBox="0 0 190 108" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="chromeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f8fafc"/>
-                            <stop offset="45%" stop-color="#94a3b8"/>
-                            <stop offset="75%" stop-color="#e2e8f0"/>
-                            <stop offset="100%" stop-color="#38bdf8"/>
-                        </linearGradient>
-                        <linearGradient id="innerGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#0ea5e9"/>
-                            <stop offset="50%" stop-color="#7dd3fc"/>
-                            <stop offset="100%" stop-color="#0ea5e9"/>
-                        </linearGradient>
-                    </defs>
-                    <!-- Sleek automotive-style oval emblem -->
-                    <ellipse cx="95" cy="54" rx="86" ry="44" fill="rgba(14, 165, 233, 0.08)" stroke="url(#chromeGrad)" stroke-width="4.5"/>
-                    <ellipse cx="95" cy="54" rx="76" ry="36" fill="none" stroke="rgba(125, 211, 252, 0.35)" stroke-width="1.2"/>
-                    <!-- Stylized coding chevrons & spark inside emblem -->
-                    <path d="M 64 38 L 44 54 L 64 70" fill="none" stroke="url(#chromeGrad)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M 126 38 L 146 54 L 126 70" fill="none" stroke="url(#chromeGrad)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M 103 31 L 87 77" fill="none" stroke="url(#innerGlow)" stroke-width="5.5" stroke-linecap="round"/>
-                </svg>
+                <img class="boot-logo-img" src="{logo_src}" alt="TriCodeKids Logo" />
             </div>
             <h1 style="
-                font-size: 2.1rem;
+                font-size: 2.6rem;
                 font-weight: 600;
-                margin: 22px 0 4px 0;
+                margin: 26px 0 4px 0;
                 background: linear-gradient(90deg, #94a3b8 0%, #f8fafc 50%, #7dd3fc 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;

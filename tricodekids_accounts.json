@@ -1,0 +1,15 @@
+{
+  "vihaandev-s": {
+    "display_name": "vihaandev-s",
+    "salt": "3eca077fb251a2cd",
+    "password_hash": "45e2e790ade768b3ecde32c69ed1f86af6ce6082a4f76621ed63ec246b4d6b80",
+    "progress": {
+      "score": 0,
+      "quiz_solved": [],
+      "first_try_solved": [],
+      "completed": [],
+      "bonus_solved": [],
+      "quiz_attempts": {}
+    }
+  }
+}

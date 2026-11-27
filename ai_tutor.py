@@ -101,7 +101,7 @@ def ask_tribot(user_question: str) -> str:
             )
             if response and response.text:
                 return response.text
-        except Exception as e:
+        except Exception:
             # Fall back smoothly if network / key error occurs
             return get_tribot_fallback_answer(user_question)
 

@@ -1,6 +1,4 @@
 import streamlit as st
-import json
-import os
 from accounts import load_user_progress, save_user_progress
 
 PROGRESS_FILE = "tricodekids_progress.json"
